@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบส่งงานและตรวจสอบคะแนนนักเรียน</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Prompt -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- SweetAlert2 for beautiful alerts -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* Custom styles for the application */
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: #FFF5F5;
+            background-image:
+                radial-gradient(#FFD1D1 1px, transparent 1px),
+                radial-gradient(#FFD1D1 1px, transparent 1px);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            overflow-x: hidden;
+        }
+
+        .k-minimal {
+            border-radius: 20px;
+        }
+
+        .btn-primary {
+            background-color: #FF5252;
+            color: white;
+            border-radius: 50px;
+            padding: 10px 20px;
+            font-weight: 500;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(255, 82, 82, 0.2);
+        }
+
+        .btn-primary:hover {
+            background-color: #FF3030;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(255, 82, 82, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: #FFD1D1;
+            color: #FF5252;
+            border-radius: 50px;
+            padding: 10px 20px;
+            font-weight: 500;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(255, 209, 209, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background-color: #FFBDBD;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(255, 209, 209, 0.4);
+        }
+
+        .input-field {
+            border: 2px solid #FFD1D1;
+            border-radius: 50px;
+            padding: 10px 20px;
+            transition: all 0.3s;
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .input-field:focus {
+            border-color: #FF5252;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 82, 82, 0.2);
+            background-color: white;
+        }
+
+        .card {
+            border-radius: 20px;
+            box-shadow: 0 10px 25px -5px rgba(255, 82, 82, 0.1), 0 10px 10px -5px rgba(255, 82, 82, 0.04);
+            background-color: white;
+            overflow: hidden;
+            border: 1px solid rgba(255, 209, 209, 0.3);
+        }
+
+        .card-header {
+            background-color: #FF5252;
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+        }
+
+        .emoji-icon {
+            font-size: 1.5rem;
+            margin-right: 8px;
+        }
+
+        @media (max-width: 640px) {
+            .emoji-icon {
+                font-size: 1.2rem;
+                margin-right: 5px;
+            }
+        }
+
+        .table-header {
+            background-color: #FFD1D1;
+            color: #FF5252;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            border-radius: 50px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        .nav-link:hover {
+            background-color: #FFD1D1;
+            transform: translateX(5px);
+        }
+
+        .nav-link.active {
+            background-color: #FF5252;
+            color: white;
+        }
+
+        .upload-area {
+            border: 2px dashed #FFD1D1;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .upload-area:hover {
+            border-color: #FF5252;
+            background-color: #FFF5F5;
+        }
+
+        .file-item {
+            background-color: #FFF5F5;
+            border-radius: 15px;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid #FFD1D1;
+            transition: all 0.3s;
+        }
+
+        .file-item:hover {
+            background-color: #FFE8E8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(255, 82, 82, 0.1);
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .bounce-animation {
+            animation: bounce 2s infinite;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #FFD1D1;
+            border-top: 4px solid #FF5252;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Custom select styling */
+        select.input-field {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23FF5252' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 16px 12px;
+            padding-right: 2.5rem;
+        }
+
+        /* K-Minimal style decorations */
+        .k-decoration {
+            position: absolute;
+            z-index: -1;
+            opacity: 0.6;
+        }
+
+        .k-circle-1 {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background-color: #FFD1D1;
+            top: 10%;
+            left: 5%;
+            display: none;
+        }
+
+        .k-circle-2 {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: #FFECEC;
+            bottom: 15%;
+            right: 10%;
+            display: none;
+        }
+
+        @media (min-width: 768px) {
+            .k-circle-1, .k-circle-2 {
+                display: block;
+            }
+        }
+
+        .k-wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 30px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z' fill='%23FFD1D1' opacity='0.5'%3E%3C/path%3E%3C/svg%3E");
+            background-size: cover;
+            z-index: -1;
+        }
+
+        @media (min-width: 768px) {
+            .k-wave {
+                height: 50px;
+            }
+        }
+
+        /* Header styling */
+        header {
+            background-color: white;
+            border-bottom: 1px solid #FFD1D1;
+        }
+
+        /* Footer styling */
+        footer {
+            background-color: white;
+            border-top: 1px solid #FFD1D1;
+        }
+
+        /* Dashboard cards */
+        .dashboard-card {
+            transition: all 0.3s;
+            border: 1px solid #FFD1D1;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(255, 82, 82, 0.1);
+        }
+
+        .dashboard-icon {
+            background-color: #FFF0F0;
+            border: 2px solid #FFD1D1;
+            transition: all 0.3s;
+        }
+
+        .dashboard-card:hover .dashboard-icon {
+            background-color: #FFD1D1;
+            transform: scale(1.1);
+        }
+
+        /* Table styling */
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid #FFD1D1;
+        }
+
+        th {
+            background-color: #FFD1D1;
+            color: #FF5252;
+            font-weight: 500;
+            text-align: center;
+            padding: 12px;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #FFE8E8;
+            text-align: center;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:nth-child(even) {
+            background-color: #FFF8F8;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .card-header {
+                padding: 12px 15px;
+            }
+
+            .upload-area {
+                padding: 20px 15px;
+            }
+
+            th, td {
+                padding: 8px;
+                font-size: 0.9rem;
+            }
+
+            .btn-primary, .btn-secondary {
+                padding: 8px 16px;
+                font-size: 0.9rem;
+            }
+
+            .input-field {
+                padding: 8px 16px;
+            }
+        }
+
+        /* Mobile header adjustments */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .header-logo-text {
+                margin-top: 10px;
+                margin-bottom: 15px;
+            }
+
+            .nav-buttons {
+                width: 100%;
+                display: flex;
+                justify-content: center;
+                margin-top: 10px;
+            }
+        }
+
+        /* Tablet adjustments */
+        @media (min-width: 641px) and (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Fix for mobile overflow */
+        .overflow-x-auto {
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Improved touch targets for mobile */
+        @media (max-width: 640px) {
+            .btn-primary, .btn-secondary, .nav-link, .file-item button {
+                min-height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .input-field, select.input-field {
+                min-height: 44px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- K-Minimal Decorations -->
+    <div class="k-decoration k-circle-1"></div>
+    <div class="k-decoration k-circle-2"></div>
+    <div class="k-decoration k-wave"></div>
+
+    <!-- Header -->
+    <header class="py-4 shadow-sm">
+        <div class="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center header-content">
+            <div class="flex flex-col md:flex-row items-center header-logo-text">
+                <img src="https://img5.pic.in.th/file/secure-sv1/3185655e1922e7d8007a8d0587fa4ca7.png" alt="โลโก้" class="h-[80px] md:h-[100px] mr-0 md:mr-4 mb-2 md:mb-0">
+                <h1 class="text-xl md:text-2xl font-semibold text-gray-800 text-center md:text-left">ระบบส่งงานและตรวจสอบคะแนนนักเรียน<br><span class="text-sm md:text-base text-gray-600">ครูภัตติมา วงค์สุวรรณ์ (ครูมิ้ว)</span></h1>
+            </div>
+            <div id="nav-buttons" class="hidden nav-buttons">
+                <button id="back-btn" class="btn-secondary mr-2">
+                    <span class="emoji-icon">⬅️</span> ย้อนกลับ
+                </button>
+                <button id="home-btn" class="btn-primary">
+                    <span class="emoji-icon">🏠</span> หน้าแรก
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-6 md:py-8">
+        <!-- Login Form -->
+        <div id="login-section" class="max-w-md mx-auto">
+            <div class="card">
+                <div class="card-header flex items-center">
+                    <span class="emoji-icon">🎓</span> ลงทะเบียนเข้าใช้งาน
+                </div>
+                <div class="p-4 md:p-6">
+                    <div class="mb-4">
+                        <label for="student-id" class="block text-gray-700 mb-2 flex items-center">
+                            <span class="emoji-icon">🔢</span> เลขประจำตัวนักเรียน
+                        </label>
+                        <input type="text" id="student-id" class="input-field w-full" placeholder="กรอกเลขประจำตัวนักเรียน">
+                    </div>
+                    <div class="mb-6">
+                        <label for="classroom" class="block text-gray-700 mb-2 flex items-center">
+                            <span class="emoji-icon">🏫</span> ห้องเรียน
+                        </label>
+                        <select id="classroom" class="input-field w-full">
+                            <option value="" disabled selected>เลือกห้องเรียน</option>
+                            <option value="201">ม.2/1</option>
+                            <option value="202">ม.2/2</option>
+                            <option value="307">ม.3/7</option>
+                            <option value="501">ม.5/1</option>
+                            <option value="503">ม.5/3</option>
+                            <option value="504">ม.5/4</option>
+                            <option value="601">ม.6/1</option>
+                        </select>
+                    </div>
+                    <button id="login-btn" class="btn-primary w-full flex justify-center items-center" disabled>
+                        <span class="emoji-icon">✨</span> เข้าสู่ระบบ
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="dashboard-section" class="hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 dashboard-grid">
+                <div class="card dashboard-card hover:shadow-lg transition-shadow duration-300">
+                    <div class="card-header flex items-center">
+                        <span class="emoji-icon">📊</span> ตรวจสอบคะแนน
+                    </div>
+                    <div class="p-4 md:p-6 flex flex-col items-center">
+                        <div class="w-20 h-20 md:w-24 md:h-24 dashboard-icon rounded-full flex items-center justify-center mb-4">
+                            <span class="text-3xl md:text-4xl">📝</span>
+                        </div>
+                        <p class="text-gray-600 mb-6 text-center">ดูคะแนนและผลการเรียนของคุณ</p>
+                        <button id="check-score-btn" class="btn-primary">
+                            <span class="emoji-icon">🔍</span> ตรวจสอบคะแนน
+                        </button>
+                    </div>
+                </div>
+                <div class="card dashboard-card hover:shadow-lg transition-shadow duration-300">
+                    <div class="card-header flex items-center">
+                        <span class="emoji-icon">📤</span> ส่งงาน
+                    </div>
+                    <div class="p-4 md:p-6 flex flex-col items-center">
+                        <div class="w-20 h-20 md:w-24 md:h-24 dashboard-icon rounded-full flex items-center justify-center mb-4">
+                            <span class="text-3xl md:text-4xl">📁</span>
+                        </div>
+                        <p class="text-gray-600 mb-6 text-center">ส่งงานและติดตามสถานะงานของคุณ</p>
+                        <button id="submit-work-btn" class="btn-primary">
+                            <span class="emoji-icon">📎</span> ส่งงาน
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Check Score Section -->
+        <div id="score-section" class="hidden">
+            <div class="card mb-4 md:mb-6">
+                <div class="card-header flex items-center">
+                    <span class="emoji-icon">📊</span> ข้อมูลนักเรียน
+                </div>
+                <div class="p-4 md:p-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+                        <div>
+                            <p class="text-gray-600 text-sm md:text-base">เลขประจำตัว:</p>
+                            <p id="score-student-id" class="font-semibold text-base md:text-lg"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 text-sm md:text-base">ชื่อ-นามสกุล:</p>
+                            <p id="score-student-name" class="font-semibold text-base md:text-lg"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 text-sm md:text-base">เลขที่:</p>
+                            <p id="score-student-number" class="font-semibold text-base md:text-lg"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 text-sm md:text-base">ห้อง:</p>
+                            <p id="score-student-class" class="font-semibold text-base md:text-lg"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header flex items-center">
+                    <span class="emoji-icon">🏆</span> คะแนนของฉัน
+                </div>
+                <div class="p-4 md:p-6">
+                    <div id="loading-scores" class="flex justify-center py-6 md:py-8">
+                        <div class="loading-spinner"></div>
+                    </div>
+                    <div id="score-table-container" class="hidden">
+                        <div class="overflow-x-auto">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>รายการ</th>
+                                        <th>คะแนนที่ได้</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="score-table-body">
+                                    <!-- Score data will be inserted here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div id="no-scores" class="hidden text-center py-6 md:py-8">
+                        <p class="text-gray-500">ไม่พบข้อมูลคะแนน</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Work Section -->
+        <div id="submit-work-section" class="hidden">
+            <div class="card mb-4 md:mb-6">
+                <div class="card-header flex items-center">
+                    <span class="emoji-icon">👤</span> ข้อมูลนักเรียน
+                </div>
+                <div class="p-4 md:p-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+                        <div>
+                            <p class="text-gray-600 text-sm md:text-base">เลขประจำตัว:</p>
+                            <p id="work-student-id" class="font-semibold text-base md:text-lg"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 text-sm md:text-base">ชื่อ-นามสกุล:</p>
+                            <p id="work-student-name" class="font-semibold text-base md:text-lg"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 text-sm md:text-base">เลขที่:</p>
+                            <p id="work-student-number" class="font-semibold text-base md:text-lg"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 text-sm md:text-base">ห้อง:</p>
+                            <p id="work-student-class" class="font-semibold text-base md:text-lg"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4 md:mb-6">
+                <div class="card-header flex items-center">
+                    <span class="emoji-icon">📤</span> ส่งงาน
+                </div>
+                <div class="p-4 md:p-6">
+                    <div class="mb-4">
+                        <label for="work-name" class="block text-gray-700 mb-2 flex items-center">
+                            <span class="emoji-icon">📝</span> ชื่องาน
+                        </label>
+                        <input type="text" id="work-name" class="input-field w-full" placeholder="กรอกชื่องาน">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-gray-700 mb-2 flex items-center">
+                            <span class="emoji-icon">📎</span> อัพโหลดไฟล์
+                        </label>
+                        <div class="upload-area" id="upload-area">
+                            <input type="file" id="file-upload" class="hidden" accept=".pdf,.jpg,.jpeg,.png,.mp4,.mov">
+                            <div class="flex flex-col items-center">
+                                <span class="text-3xl md:text-4xl mb-2">📁</span>
+                                <p class="text-gray-600 mb-2 text-sm md:text-base">คลิกหรือลากไฟล์มาวางที่นี่</p>
+                                <p class="text-gray-500 text-xs md:text-sm">รองรับไฟล์ PDF, รูปภาพ และวิดีโอ</p>
+                            </div>
+                        </div>
+                        <div id="file-preview" class="mt-4 hidden">
+                            <div class="flex items-center p-3 bg-red-50 rounded-lg">
+                                <span class="text-xl md:text-2xl mr-2 md:mr-3">📄</span>
+                                <div class="flex-grow overflow-hidden">
+                                    <p id="file-name" class="font-medium text-sm md:text-base truncate"></p>
+                                    <p id="file-size" class="text-xs md:text-sm text-gray-500"></p>
+                                </div>
+                                <button id="remove-file" class="text-red-500 hover:text-red-700 ml-2 p-2">
+                                    <span class="emoji-icon">❌</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-6">
+                        <label for="work-note" class="block text-gray-700 mb-2 flex items-center">
+                            <span class="emoji-icon">📌</span> หมายเหตุ (กรณีงานกลุ่ม)
+                        </label>
+                        <textarea id="work-note" class="input-field w-full" rows="3" placeholder="กรอกชื่อเพื่อนร่วมกลุ่ม (ถ้ามี)"></textarea>
+                    </div>
+                    <button id="submit-btn" class="btn-primary w-full flex justify-center items-center">
+                        <span class="emoji-icon">✅</span> ส่งงาน
+                    </button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header flex items-center">
+                    <span class="emoji-icon">📋</span> ประวัติการส่งงาน
+                </div>
+                <div class="p-4 md:p-6">
+                    <div id="work-history">
+                        <!-- Work history will be inserted here -->
+                    </div>
+                    <div id="no-work-history" class="text-center py-4">
+                        <p class="text-gray-500">ยังไม่มีประวัติการส่งงาน</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-4 md:py-6 mt-6">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-600 text-sm md:text-base">© 2025 ระบบส่งงานและตรวจสอบคะแนนนักเรียน<br>พัฒนาโดย ครูภัตติมา วงค์สุวรรณ์ (ครูมิ้ว)</p>
+        </div>
+    </footer>
+
+    <script>
+        // ***********************************************************************************
+        // สำคัญ: คุณต้องเปลี่ยนค่า API_URL นี้เป็น URL ของ Google Apps Script Web App ของคุณ
+        // หลังจากที่คุณ Deploy โค้ด Google Apps Script (gs code.txt.txt) แล้ว
+        // ดูขั้นตอนการ Deploy ด้านล่าง
+        // ***********************************************************************************
+        const API_URL = "https://script.google.com/macros/s/AKfycbzkaaNRr3ijF90rPinjGz6n7LqeOqdqK0LaUllmCAWyqJZgGx8bTFJRNM2-Q9iR-_DM/exec"; // ตัวอย่าง URL, เปลี่ยนเป็นของคุณเอง
+
+        // DOM Elements
+        const studentIdInput = document.getElementById('student-id');
+        const classroomSelect = document.getElementById('classroom');
+        const loginBtn = document.getElementById('login-btn');
+        const navButtons = document.getElementById('nav-buttons');
+        const backBtn = document.getElementById('back-btn');
+        const homeBtn = document.getElementById('home-btn');
+
+        // Sections
+        const loginSection = document.getElementById('login-section');
+        const dashboardSection = document.getElementById('dashboard-section');
+        const scoreSection = document.getElementById('score-section');
+        const submitWorkSection = document.getElementById('submit-work-section');
+
+        // Current user data
+        let currentUser = null;
+        let currentClass = null;
+
+        // Enable login button only when both fields are filled
+        function checkLoginFields() {
+            const studentId = studentIdInput.value.trim();
+            const classroom = classroomSelect.value;
+            loginBtn.disabled = !(studentId && classroom);
+        }
+
+        studentIdInput.addEventListener('input', checkLoginFields);
+        classroomSelect.addEventListener('change', checkLoginFields);
+
+        // Login functionality
+        loginBtn.addEventListener('click', function() {
+            const studentId = studentIdInput.value.trim();
+            const classCode = classroomSelect.value;
+
+            // Show loading
+            Swal.fire({
+                title: 'กำลังตรวจสอบ...',
+                text: 'โปรดรอสักครู่',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // Call API to get student info
+            fetch(`${API_URL}?action=getStudentInfo&studentId=${studentId}&classroom=${classCode}`)
+                .then(response => response.json())
+                .then(data => {
+                    Swal.close();
+
+                    if (data.success) {
+                        currentUser = data.student;
+                        currentClass = classCode;
+
+                        // Show dashboard
+                        loginSection.classList.add('hidden');
+                        dashboardSection.classList.remove('hidden');
+                        navButtons.classList.remove('hidden');
+
+                        // Update student info in both sections
+                        updateStudentInfo();
+                    } else {
+                        Swal.fire({
+                            title: 'ไม่พบข้อมูลนักเรียน',
+                            text: 'กรุณาตรวจสอบเลขประจำตัวและห้องเรียนอีกครั้ง',
+                            icon: 'error',
+                            confirmButtonText: 'ตกลง',
+                            confirmButtonColor: '#FF5252'
+                        });
+                    }
+                })
+                .catch(error => {
+                    Swal.close();
+                    Swal.fire({
+                        title: 'เกิดข้อผิดพลาด',
+                        text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้',
+                        icon: 'error',
+                        confirmButtonText: 'ตกลง',
+                        confirmButtonColor: '#FF5252'
+                    });
+                    console.error('Error:', error);
+                });
+        });
+
+        // Update student info in both sections
+        function updateStudentInfo() {
+            // For score section
+            document.getElementById('score-student-id').textContent = currentUser.id;
+            document.getElementById('score-student-name').textContent = currentUser.name;
+            document.getElementById('score-student-number').textContent = currentUser.number;
+            document.getElementById('score-student-class').textContent = currentUser.classroom;
+
+            // For work submission section
+            document.getElementById('work-student-id').textContent = currentUser.id;
+            document.getElementById('work-student-name').textContent = currentUser.name;
+            document.getElementById('work-student-number').textContent = currentUser.number;
+            document.getElementById('work-student-class').textContent = currentUser.classroom;
+
+            // Update work history
+            loadWorkHistory();
+        }
+
+        // Navigation
+        document.getElementById('check-score-btn').addEventListener('click', function() {
+            dashboardSection.classList.add('hidden');
+            scoreSection.classList.remove('hidden');
+            submitWorkSection.classList.add('hidden');
+
+            // Simulate loading scores
+            document.getElementById('loading-scores').classList.remove('hidden');
+            document.getElementById('score-table-container').classList.add('hidden');
+            document.getElementById('no-scores').classList.add('hidden');
+
+            // Load scores from API
+            loadScores();
+        });
+
+        document.getElementById('submit-work-btn').addEventListener('click', function() {
+            dashboardSection.classList.add('hidden');
+            scoreSection.classList.add('hidden');
+            submitWorkSection.classList.remove('hidden');
+        });
+
+        backBtn.addEventListener('click', function() {
+            if (!loginSection.classList.contains('hidden')) {
+                return;
+            }
+
+            if (!dashboardSection.classList.contains('hidden')) {
+                // Go back to login
+                dashboardSection.classList.add('hidden');
+                loginSection.classList.remove('hidden');
+                navButtons.classList.add('hidden');
+                currentUser = null;
+                studentIdInput.value = ''; // Clear input fields
+                classroomSelect.value = ''; // Clear select
+                checkLoginFields(); // Disable login button
+                currentClass = null;
+            } else {
+                // Go back to dashboard
+                scoreSection.classList.add('hidden');
+                submitWorkSection.classList.add('hidden');
+                dashboardSection.classList.remove('hidden');
+            }
+        });
+
+        homeBtn.addEventListener('click', function() {
+            scoreSection.classList.add('hidden');
+            submitWorkSection.classList.add('hidden');
+            dashboardSection.classList.remove('hidden');
+        });
+
+        // Load scores from API
+        function loadScores() {
+            fetch(`${API_URL}?action=getScores&studentId=${currentUser.id}&classroom=${currentClass}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('loading-scores').classList.add('hidden');
+
+                    if (data.success && data.scores && data.scores.length > 0) {
+                        const tableBody = document.getElementById('score-table-body');
+                        tableBody.innerHTML = '';
+
+                        data.scores.forEach(score => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td>${score.name}</td>
+                                <td>${score.score}</td>
+                            `;
+                            tableBody.appendChild(row);
+                        });
+
+                        document.getElementById('score-table-container').classList.remove('hidden');
+                        document.getElementById('no-scores').classList.add('hidden');
+                    } else {
+                        document.getElementById('score-table-container').classList.add('hidden');
+                        document.getElementById('no-scores').classList.remove('hidden');
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('loading-scores').classList.add('hidden');
+                    document.getElementById('score-table-container').classList.add('hidden');
+                    document.getElementById('no-scores').classList.remove('hidden');
+
+                    Swal.fire({
+                        title: 'เกิดข้อผิดพลาด',
+                        text: 'ไม่สามารถโหลดข้อมูลคะแนนได้',
+                        icon: 'error',
+                        confirmButtonText: 'ตกลง',
+                        confirmButtonColor: '#FF5252'
+                    });
+                    console.error('Error:', error);
+                });
+        }
+
+        // File upload handling
+        const uploadArea = document.getElementById('upload-area');
+        const fileUpload = document.getElementById('file-upload');
+        const filePreview = document.getElementById('file-preview');
+        const fileName = document.getElementById('file-name');
+        const fileSize = document.getElementById('file-size');
+        const removeFileBtn = document.getElementById('remove-file');
+
+        uploadArea.addEventListener('click', () => {
+            fileUpload.click();
+        });
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('border-red-500');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('border-red-500');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('border-red-500');
+
+            if (e.dataTransfer.files.length) {
+                fileUpload.files = e.dataTransfer.files;
+                updateFilePreview();
+            }
+        });
+
+        fileUpload.addEventListener('change', updateFilePreview);
+
+        function updateFilePreview() {
+            if (fileUpload.files.length) {
+                const file = fileUpload.files[0];
+                fileName.textContent = file.name;
+                fileSize.textContent = formatFileSize(file.size);
+                filePreview.classList.remove('hidden');
+            } else {
+                filePreview.classList.add('hidden');
+            }
+        }
+
+        removeFileBtn.addEventListener('click', () => {
+            fileUpload.value = '';
+            filePreview.classList.add('hidden');
+        });
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' bytes';
+            else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            else return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+
+        // Submit work
+        document.getElementById('submit-btn').addEventListener('click', function() {
+            const workName = document.getElementById('work-name').value.trim();
+            const workNote = document.getElementById('work-note').value.trim();
+
+            if (!workName) {
+                Swal.fire({
+                    title: 'กรุณากรอกชื่องาน',
+                    icon: 'warning',
+                    confirmButtonText: 'ตกลง',
+                    confirmButtonColor: '#FF5252'
+                });
+                return;
+            }
+
+            if (!fileUpload.files.length) {
+                Swal.fire({
+                    title: 'กรุณาเลือกไฟล์',
+                    icon: 'warning',
+                    confirmButtonText: 'ตกลง',
+                    confirmButtonColor: '#FF5252'
+                });
+                return;
+            }
+
+            // Show loading
+            Swal.fire({
+                title: 'กำลังอัพโหลด...',
+                text: 'โปรดรอสักครู่',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // Read file as base64
+            const file = fileUpload.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                // Get base64 data
+                const base64Data = e.target.result.split(',')[1];
+
+                // Create form data
+                const formData = new FormData();
+                formData.append('action', 'submitWork');
+                formData.append('studentId', currentUser.id);
+                formData.append('classroom', currentClass);
+                formData.append('workName', workName);
+                formData.append('fileName', file.name);
+                formData.append('fileMimeType', file.type);
+                formData.append('fileData', base64Data);
+                formData.append('note', workNote);
+
+                // Submit to API
+                fetch(API_URL, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Reset form
+                        document.getElementById('work-name').value = '';
+                        document.getElementById('work-note').value = '';
+                        fileUpload.value = '';
+                        filePreview.classList.add('hidden');
+
+                        // Reload work history
+                        loadWorkHistory();
+
+                        Swal.fire({
+                            title: 'ส่งงานสำเร็จ',
+                            text: 'อัพโหลดไฟล์เรียบร้อยแล้ว',
+                            icon: 'success',
+                            confirmButtonText: 'ตกลง',
+                            confirmButtonColor: '#FF5252'
+                        });
+                    } else {
+                        Swal.fire({
+                            title: 'เกิดข้อผิดพลาด',
+                            text: data.message || 'ไม่สามารถส่งงานได้',
+                            icon: 'error',
+                            confirmButtonText: 'ตกลง',
+                            confirmButtonColor: '#FF5252'
+                        });
+                    }
+                })
+                .catch(error => {
+                    Swal.fire({
+                        title: 'เกิดข้อผิดพลาด',
+                        text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้',
+                        icon: 'error',
+                        confirmButtonText: 'ตกลง',
+                        confirmButtonColor: '#FF5252'
+                    });
+                    console.error('Error:', error);
+                });
+            };
+
+            reader.readAsDataURL(file);
+        });
+
+        // Load work history from API
+        function loadWorkHistory() {
+            fetch(`${API_URL}?action=getWorkHistory&studentId=${currentUser.id}`)
+                .then(response => response.json())
+                .then(data => {
+                    const historyContainer = document.getElementById('work-history');
+                    const noHistoryMessage = document.getElementById('no-work-history');
+
+                    if (data.success && data.submissions && data.submissions.length > 0) {
+                        historyContainer.innerHTML = '';
+                        noHistoryMessage.classList.add('hidden');
+
+                        data.submissions.forEach(work => {
+                            const workItem = document.createElement('div');
+                            workItem.className = 'file-item mb-3';
+                            workItem.innerHTML = `
+                                <div class="overflow-hidden">
+                                    <div class="flex items-center mb-1">
+                                        <span class="emoji-icon">📄</span>
+                                        <span class="font-medium text-sm md:text-base truncate">${work.workName}</span>
+                                    </div>
+                                    <div class="text-xs md:text-sm text-gray-500">
+                                        <p class="truncate">ไฟล์: ${work.fileName}</p>
+                                        ${work.note ? `<p class="truncate">หมายเหตุ: ${work.note}</p>` : ''}
+                                        <p>วันที่ส่ง: ${work.date}</p>
+                                    </div>
+                                </div>
+                                <button class="delete-work-btn text-red-500 hover:text-red-700 ml-2 p-2" data-id="${work.id}">
+                                    <span class="emoji-icon">🗑️</span>
+                                </button>
+                            `;
+                            historyContainer.appendChild(workItem);
+                        });
+
+                        // Add delete event listeners
+                        document.querySelectorAll('.delete-work-btn').forEach(btn => {
+                            btn.addEventListener('click', function() {
+                                const workId = this.getAttribute('data-id');
+                                deleteWork(workId);
+                            });
+                        });
+                    } else {
+                        historyContainer.innerHTML = '';
+                        noHistoryMessage.classList.remove('hidden');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        // Delete work
+        function deleteWork(workId) {
+            Swal.fire({
+                title: 'ยืนยันการลบ',
+                text: 'คุณต้องการลบงานนี้ใช่หรือไม่?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'ใช่, ลบเลย',
+                cancelButtonText: 'ยกเลิก',
+                confirmButtonColor: '#FF5252',
+                cancelButtonColor: '#718096'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Show loading
+                    Swal.fire({
+                        title: 'กำลังลบ...',
+                        text: 'โปรดรอสักครู่',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    // Call API to delete work
+                    fetch(`${API_URL}?action=deleteWork&workId=${workId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Reload work history
+                                loadWorkHistory();
+
+                                Swal.fire({
+                                    title: 'ลบสำเร็จ',
+                                    text: 'ลบงานเรียบร้อยแล้ว',
+                                    icon: 'success',
+                                    confirmButtonText: 'ตกลง',
+                                    confirmButtonColor: '#FF5252'
+                                });
+                            } else {
+                                Swal.fire({
+                                    title: 'เกิดข้อผิดพลาด',
+                                    text: data.message || 'ไม่สามารถลบงานได้',
+                                    icon: 'error',
+                                    confirmButtonText: 'ตกลง',
+                                    confirmButtonColor: '#FF5252'
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            Swal.fire({
+                                title: 'เกิดข้อผิดพลาด',
+                                text: 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ได้',
+                                icon: 'error',
+                                confirmButtonText: 'ตกลง',
+                                confirmButtonColor: '#FF5252'
+                            });
+                            console.error('Error:', error);
+                        });
+                }
+            });
+        }
+
+        // Add touch support for mobile devices
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fix for iOS devices to properly handle touch events
+            if ('ontouchstart' in window) {
+                document.body.classList.add('touch-device');
+
+                // Improve touch targets
+                const touchTargets = document.querySelectorAll('button, select, input, textarea, .file-item');
+                touchTargets.forEach(element => {
+                    element.style.minHeight = '44px';
+                });
+            }
+
+            // Fix for iOS viewport height issues
+            const setVH = () => {
+                let vh = window.innerHeight * 0.01;
+                document.documentElement.style.setProperty('--vh', `${vh}px`);
+            };
+
+            setVH();
+            window.addEventListener('resize', setVH);
+            window.addEventListener('orientationchange', setVH);
+        });
+    </script>
+</body>
+</html>
